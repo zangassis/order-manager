@@ -24,30 +24,30 @@ app.MapGet("/orders/redis", async (IDistributedCache distributedCache) =>
 
             var cacheKey = "orderList";
 
-            string serializedOrderList;
+            string serializedOrders;
 
             var orderList = new List<Order>();
 
-            var redisOrderList = await distributedCache.GetAsync(cacheKey);
+            var redisOrders = await distributedCache.GetAsync(cacheKey);
 
-            if (redisOrderList != null)
+            if (redisOrders != null)
             {
-                serializedOrderList = Encoding.UTF8.GetString(redisOrderList);
-                orderList = JsonConvert.DeserializeObject<List<Order>>(serializedOrderList);
+                serializedOrders = Encoding.UTF8.GetString(redisOrders);
+                orderList = JsonConvert.DeserializeObject<List<Order>>(serializedOrders);
             }
             else
             {
                 orderList = orders.ToList();
 
-                serializedOrderList = JsonConvert.SerializeObject(orderList);
+                serializedOrders = JsonConvert.SerializeObject(orderList);
 
-                redisOrderList = Encoding.UTF8.GetBytes(serializedOrderList);
+                redisOrders = Encoding.UTF8.GetBytes(serializedOrders);
 
                 var options = new DistributedCacheEntryOptions()
                       .SetAbsoluteExpiration(DateTime.Now.AddMinutes(10))
                       .SetSlidingExpiration(TimeSpan.FromMinutes(2));
 
-                distributedCache.SetAsync(cacheKey, redisOrderList, options);
+                distributedCache.SetAsync(cacheKey, redisOrders, options);
             }
             return orderList;
         }
@@ -57,6 +57,5 @@ app.MapGet("/orders/redis", async (IDistributedCache distributedCache) =>
         throw;
     }
 });
-
 
 app.Run();
